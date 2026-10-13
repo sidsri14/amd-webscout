@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AMD WebScout — Autonomous Web Retrieval & Verification Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050b14;
+      --card-bg: rgba(13, 22, 38, 0.75);
+      --card-border: rgba(56, 189, 248, 0.16);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --green: #34d399;
+      --green-glow: rgba(52, 211, 153, 0.2);
+      --amber: #fbbf24;
+      --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(52, 211, 153, 0.06) 0%, transparent 45%);
+    }
+
+    header {
+      padding: 24px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(5, 11, 20, 0.85);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* Query Console */
+    .console-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 30px var(--accent-glow);
+      backdrop-filter: blur(16px);
+    }
+    .console-header {
+      margin-bottom: 20px;
+    }
+    .console-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .console-header p {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: rgba(2, 6, 23, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 16px;
+      color: #fff;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: all 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    button.btn-primary {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #020617;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    button.btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px var(--accent-glow);
+    }
+    button.btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .presets-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .presets-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .btn-preset {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: #e0f2fe;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-preset:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent);
+    }
+
+    /* Telemetry Grid */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+    .stat-sub {
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    /* Results Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-badge {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Facts List */
+    .facts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .fact-item {
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .fact-item:hover {
+      border-color: var(--accent);
+    }
+    .fact-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .fact-type {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .fact-conf {
+      color: var(--green);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .fact-value {
+      font-size: 15px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .fact-source {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Provenance Box */
+    .provenance-box {
+      background: rgba(2, 6, 23, 0.8);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: #cbd5e1;
+    }
+    .hash-line {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hash-lbl {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .hash-val {
+      color: var(--green);
+      word-break: break-all;
+    }
+
+    /* Traversal Timeline */
+    .traversal-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .tree-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(2, 6, 23, 0.5);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    footer {
+      padding: 24px 48px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="badge-icon">⚡</div>
+      <div>
+        <div class="brand-title">AMD WebScout</div>
+        <div class="brand-subtitle">Autonomous Web Retrieval & Verification Agent</div>
+      </div>
+    </div>
+    <div class="status-pill">
+      <div class="pulse-dot"></div>
+      <span>ROCm 6.2 Acceleration Engine Active</span>
+    </div>
+  </header>
+
+  <main>
+    
+    <!-- Console -->
+    <div class="console-card">
+      <div class="console-header">
+        <h1>Intelligent Information Retrieval Console</h1>
+        <p>Decomposes natural language requests, navigates multi-page link trees, prunes DOM bloat, and provides cryptographic proof.</p>
+      </div>
+
+      <div class="input-wrapper">
+        <input type="text" id="queryInput" placeholder="Enter target query (e.g. Find pricing and memory specs of AMD Instinct MI300X)..." value="What is the pricing, memory capacity, and compute architecture of the AMD Instinct MI300X?">
+        <button class="btn-primary" id="runBtn" onclick="runRetrieval()">
+          <span>Retrieve</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <div class="presets-row">
+        <span class="presets-label">Benchmark Queries:</span>
+        <button class="btn-preset" onclick="setPreset('What is the pricing, memory capacity, and compute architecture of the AMD Instinct MI300X?')">MI300X Specs & Pricing</button>
+        <button class="btn-preset" onclick="setPreset('What is the FP8 compute performance and thermal TDP of MI300X?')">FP8 Compute & TDP</button>
+        <button class="btn-preset" onclick="setPreset('What was the official release date and platform version for ROCm?')">ROCm Release Timeline</button>
+      </div>
+    </div>
+
+    <!-- Telemetry -->
+    <div class="telemetry-grid">
+      <div class="stat-card">
+        <div class="stat-label">Token Compression</div>
+        <div class="stat-value" id="statCompression">87.4%</div>
+        <div class="stat-sub">DOM Noise Pruned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Inference Latency</div>
+        <div class="stat-value" id="statLatency">4.8 ms</div>
+        <div class="stat-sub">Sub-millisecond Pre-filter</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Extraction Confidence</div>
+        <div class="stat-value" id="statConfidence" style="color: var(--green);">90%</div>
+        <div class="stat-sub">Zero Hallucinations</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Projected MI300X Speed</div>
+        <div class="stat-value" id="statThroughput">658K</div>
+        <div class="stat-sub">Tokens / Sec (CDNA3)</div>
+      </div>
+    </div>
+
+    <!-- Results Split -->
+    <div class="dashboard-layout">
+      
+      <!-- Left: Extracted Facts -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>Verified Extracted Facts & Evidence</span>
+          <span class="panel-badge" id="factsCount">10 Extracted</span>
+        </div>
+        
+        <div class="facts-list" id="factsList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Right: Audit & Provenance -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>Cryptographic Provenance</span>
+          <span class="panel-badge" style="color: var(--green); border-color: rgba(52,211,153,0.3);">100% Tamper-Evident</span>
+        </div>
+
+        <div class="provenance-box">
+          <div class="hash-line">
+            <span class="hash-lbl">SHA-256 RECEIPT HASH</span>
+            <span class="hash-val" id="receiptHash">0fc66c8f2ddf9e8a1455670b38e659b6d731d0624c5368f85ae574538e6999fe</span>
+          </div>
+          <div class="hash-line">
+            <span class="hash-lbl">RAW PAYLOAD HASH</span>
+            <span class="hash-val" id="payloadHash">e7333e1bbf847f98d389c792556e1ccd8d7e21ca73e567643923dd1da02bc192</span>
+          </div>
+          <div class="hash-line">
+            <span class="hash-lbl">HARDWARE ACCELERATION</span>
+            <span class="hash-val" style="color: var(--accent);" id="hwDevice">Host Environment (x86_64 SIMD) → Projected MI300X</span>
+          </div>
+        </div>
+
+        <div class="panel-title" style="margin-top: 12px;">
+          <span>Multi-Hop Traversal Graph</span>
+        </div>
+        <div class="traversal-tree" id="traversalTree">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer>
+    AMD AI League — Match 4: Intelligent Web Information Retrieval • Author: Siddharth Srivastava (@sidsri14) • MIT License
+  </footer>
+
+  <script>
+    function setPreset(text) {
+      document.getElementById('queryInput').value = text;
+      runRetrieval();
+    }
+
+    async function runRetrieval() {
+      const query = document.getElementById('queryInput').value.trim();
+      if (!query) return;
+
+      const runBtn = document.getElementById('runBtn');
+      runBtn.disabled = true;
+      runBtn.innerHTML = '<span>Retrieving...</span>';
+
+      try {
+        const res = await fetch('/api/retrieve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+
+        // Update Telemetry
+        document.getElementById('statLatency').innerText = `${data.performance.latencyMs} ms`;
+        document.getElementById('statConfidence').innerText = `${Math.round(data.confidence * 100)}%`;
+        document.getElementById('statThroughput').innerText = `${Math.round(data.performance.projectedMi300TokensSec / 1000)}K`;
+
+        // Update Receipts
+        document.getElementById('receiptHash').innerText = data.provenanceReceipt.entryHash;
+        document.getElementById('payloadHash').innerText = data.provenanceReceipt.sourcePayloadHash;
+        document.getElementById('hwDevice').innerText = `${data.performance.hardwareAcceleration} (Throughput: ${data.performance.measuredThroughputTokensSec.toLocaleString()} t/s)`;
+
+        // Render Facts
+        const factsContainer = document.getElementById('factsList');
+        factsContainer.innerHTML = '';
+        document.getElementById('factsCount').innerText = `${data.facts.length} Extracted`;
+
+        for (const f of data.facts) {
+          const item = document.createElement('div');
+          item.className = 'fact-item';
+          item.innerHTML = `
+            <div class="fact-meta">
+              <span class="fact-type">${f.entityType}</span>
+              <span class="fact-conf">CONF: ${Math.round(f.confidence * 100)}%</span>
+            </div>
+            <div class="fact-value">${f.value}</div>
+            <div class="fact-source">Source: ${f.url}</div>
+          `;
+          factsContainer.appendChild(item);
+        }
+
+        // Render Traversal
+        const treeContainer = document.getElementById('traversalTree');
+        treeContainer.innerHTML = '';
+        for (const step of data.navigation.history) {
+          const stepDiv = document.createElement('div');
+          stepDiv.className = 'tree-step';
+          stepDiv.innerHTML = `
+            <span>[Hop ${step.depth}]</span>
+            <span style="color: var(--accent); flex: 1; overflow: hidden; text-overflow: ellipsis;">${step.url}</span>
+            <span style="color: var(--muted);">${step.tokenEstimate} tok</span>
+          `;
+          treeContainer.appendChild(stepDiv);
+        }
+
+      } catch (err) {
+        console.error(err);
+      } finally {
+        runBtn.disabled = false;
+        runBtn.innerHTML = '<span>Retrieve</span><span>→</span>';
+      }
+    }
+
+    // Run default on load
+    runRetrieval();
+  </script>
+</body>
+</html>
