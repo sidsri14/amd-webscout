@@ -1,0 +1,22 @@
+{
+  "name": "amd-webscout",
+  "version": "1.0.0",
+  "description": "Autonomous intelligent web navigation, structured information retrieval, and verification agent for AMD AI League Match 4",
+  "main": "src/index.mjs",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "demo": "node demo.mjs"
+  },
+  "keywords": [
+    "amd",
+    "rocm",
+    "ai-agent",
+    "web-retrieval",
+    "information-retrieval",
+    "autonomous-navigation",
+    "verification"
+  ],
+  "author": "Siddharth Srivastava (@sidsri14)",
+  "license": "MIT"
+}
